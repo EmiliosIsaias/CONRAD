@@ -31,7 +31,7 @@ public class BreastPhantom extends Grid3D{
 					for (int k = 0;k < depth;k++){
 						float z = k - (depth/2);
 						double z_2 = Math.pow(z, 2);
-						double gauss = (1.0/2.0*Math.PI*1.0) * Math.exp(-(x_2 + y_2 + z_2)/2.0);
+						double gauss = (1.0/(2.0*Math.PI*1.0)) * Math.exp(-(x_2 + y_2 + z_2)/2.0);
 						super.addAtIndex(i, j, k, (float) gauss);
 					}
 				}
