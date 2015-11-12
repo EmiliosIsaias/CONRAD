@@ -3,6 +3,8 @@
  */
 package digitalBreastTomosynthesis;
 
+import edu.stanford.rsl.conrad.data.numeric.Grid3D;
+
 /* TODO
  * 1.- Fix the breast phantom. CHECK!
  * 2.- Create detector class derived from the Grid2D class
@@ -10,9 +12,6 @@ package digitalBreastTomosynthesis;
  * 4.- Create a source point class.
  * 5.- Project with these created classes.  
  */
-
-import ij.ImageJ;
-import edu.stanford.rsl.conrad.data.numeric.Grid3D;
 
 /**
  * @author Emilio Isaias-Camacho
@@ -26,7 +25,7 @@ public class BreastPhantom extends Grid3D{
 	
 	public BreastPhantom(int width, int height, int depth) {
 		super(width, height, depth);
-		new ImageJ();
+
 		//Getting a standard deviation which gives a proper scale to the gauss curve.
 		float sigmaY = height/7f;
 		float sigmaZ = depth/7f;
