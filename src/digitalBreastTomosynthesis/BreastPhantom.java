@@ -22,10 +22,16 @@ public class BreastPhantom extends Grid3D{
 	/**
 	 * Basic emulation for a breast phantom. Generating a 3D Gaussian.
 	 */
+	double[] dimensions;
 	
 	public BreastPhantom(int width, int height, int depth) {
 		super(width, height, depth);
-
+		this.setSpacing(1,1,1);
+		/*
+		dimensions[0] = width * getSpacing()[0];
+		dimensions[1] = height * getSpacing()[1];
+		dimensions[2] = depth * getSpacing()[2];
+		*/
 		//Getting a standard deviation which gives a proper scale to the gauss curve.
 		float sigmaY = height/7f;
 		float sigmaZ = depth/7f;
@@ -57,7 +63,12 @@ public class BreastPhantom extends Grid3D{
 		width = 200;
 		height = 200;
 		depth = 100;
+		double[] angleR = {0,(float) Math.PI};
+		int[] nP = {100,100};
+		float[] sp = {1,0.5f};
 		BreastPhantom bp = new BreastPhantom(width,height,depth);
-		bp.show();
+		ConeProjection cp = new ConeProjection(200,angleR,250f,60f,nP,sp);
+		Grid3D sino = cp.coneProject(bp, 1);
+		sino.show();
 	}
 }
