@@ -3,6 +3,7 @@
  */
 package digitalBreastTomosynthesis;
 
+import ij.ImageJ;
 import edu.stanford.rsl.conrad.data.numeric.Grid3D;
 
 /* TODO
@@ -32,6 +33,8 @@ public class BreastPhantom extends Grid3D{
 		dimensions[1] = height * getSpacing()[1];
 		dimensions[2] = depth * getSpacing()[2];
 		*/
+		double[] dims = {width*getSpacing()[0],height*getSpacing()[1],depth*getSpacing()[2]};
+		this.dimensions = dims;
 		//Getting a standard deviation which gives a proper scale to the gauss curve.
 		float sigmaY = height/7f;
 		float sigmaZ = depth/7f;
@@ -50,6 +53,7 @@ public class BreastPhantom extends Grid3D{
 						//Creating a 2D gauss considering the x-axis to be the amplitude.
 						double gauss = (1.0/Math.sqrt(2.0*Math.PI)*sigmaY*sigmaZ) *
 								Math.exp(-((y_2/(2.f * Math.pow(sigmaY,2)))+(z_2/(2.f * Math.pow(sigmaZ,2)))));
+						//Add some little balls in the phantom.
 						if (x <= gauss){super.addAtIndex(i,j,k,(float)gauss);}
 						else{super.addAtIndex(i, j, k, 0.f);}
 					}
@@ -60,6 +64,7 @@ public class BreastPhantom extends Grid3D{
 	
 	public static void main(String [] args){
 		int width,height,depth;
+		new ImageJ();
 		width = 200;
 		height = 200;
 		depth = 100;
@@ -67,6 +72,8 @@ public class BreastPhantom extends Grid3D{
 		int[] nP = {100,100};
 		float[] sp = {1,0.5f};
 		BreastPhantom bp = new BreastPhantom(width,height,depth);
+		System.out.println(bp.getOrigin());
+		bp.show();
 		ConeProjection cp = new ConeProjection(200,angleR,250f,60f,nP,sp);
 		Grid3D sino = cp.coneProject(bp, 1);
 		sino.show();

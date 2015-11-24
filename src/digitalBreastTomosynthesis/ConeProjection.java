@@ -11,13 +11,14 @@ import edu.stanford.rsl.conrad.geometry.transforms.Translation;
 /**
  * @author Emilio Isaias-Camacho
  * The parameters for this function are:
- * @parameter number of projection
- * @parameter angle range
- * @parameter source isocentre distance
- * @parameter detector isocenter distance
- * @parameter number of pixels {x,y}
- * @parameter detector spacing {x,y} 
- *
+ * @numberOfProjections number of projection
+ * @angleRange angle range
+ * @sourceIsoDistance source isocentre distance
+ * @detIsoDistance detector isocenter distance
+ * @detPixels number of pixels {x,y}
+ * @detSpacing detector spacing {x,y} 
+ * @coneAngle Cone angles in x and y direction.
+ * 
  */
 public class ConeProjection {
 	/**
@@ -50,10 +51,9 @@ public class ConeProjection {
 		this.detSpacing = detSpc;
 		float[] aux = {this.detPixel[0] * this.detSpacing[0],this.detPixel[1] * this.detSpacing[1]};
 		this.detectorSize = aux;
-		aux[0] = 1;
+		aux[0] = 1;//
 		aux[1] = 1;
 		this.coneAngle = aux;
-		
 	}
 	
 	public ConeProjection(){
