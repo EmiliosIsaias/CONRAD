@@ -36,8 +36,8 @@ public class BreastPhantom extends Grid3D{
 		double[] dims = {width*getSpacing()[0],height*getSpacing()[1],depth*getSpacing()[2]};
 		this.dimensions = dims;
 		//Getting a standard deviation which gives a proper scale to the gauss curve.
-		float sigmaY = height/7f;
-		float sigmaZ = depth/7f;
+		float sigmaY = height/10f;
+		float sigmaZ = depth/5f;
 		double x,y,z;
 		double y_2,z_2;
 		if ((depth/width) <= 1){
@@ -52,7 +52,7 @@ public class BreastPhantom extends Grid3D{
 						z_2 = Math.pow(z, 2);
 						//Creating a 2D gauss considering the x-axis to be the amplitude.
 						double gauss = (1.0/Math.sqrt(2.0*Math.PI)*sigmaY*sigmaZ) *
-								Math.exp(-((y_2/(2.f * Math.pow(sigmaY,2)))+(z_2/(2.f * Math.pow(sigmaZ,2)))));
+								Math.exp(-((y_2/(2f * Math.pow(sigmaY,2)))+(z_2/(2f * Math.pow(sigmaZ,2)))));
 						//Add some little balls in the phantom.
 						if (x <= gauss){super.addAtIndex(i,j,k,(float)gauss);}
 						else{super.addAtIndex(i, j, k, 0.f);}
