@@ -31,8 +31,8 @@ public class ConeProjection {
 	float D;						//Distance from the centre of the detector to the x-ray source.
 	int[] detPixel;					//Number of pixels in the detector
 	float[] detSpacing;				//Spacing or pitch of the detector.
-	float[] detectorSize;			//Size of the detector in milimeters.
-	float[] coneAngle;				//Cone angles in x and y direction.
+	double[] detectorSize;			//Size of the detector in milimeters.
+	double[] coneAngle;				//Cone angles in x and y direction.
 	
 	// Constructor section
 	public ConeProjection(	int nOP,		//Number of projections.
@@ -49,11 +49,10 @@ public class ConeProjection {
 		this.D = this.sourceIsoDistance + this.detIsoDistance;
 		this.detPixel = detPix;
 		this.detSpacing = detSpc;
-		float[] aux = {this.detPixel[0] * this.detSpacing[0],this.detPixel[1] * this.detSpacing[1]};
+		double[] aux = {this.detPixel[0] * this.detSpacing[0],this.detPixel[1] * this.detSpacing[1]};
 		this.detectorSize = aux;
-		aux[0] = 1;//
-		aux[1] = 1;
-		this.coneAngle = aux;
+		double[] aux2 = {Math.atan2((this.detectorSize[0]), this.D*2.0),Math.atan2((this.detectorSize[1]), this.D*2.0)};
+		this.coneAngle = aux2;
 	}
 	
 	public ConeProjection(){
@@ -67,11 +66,10 @@ public class ConeProjection {
 		this.D = this.sourceIsoDistance + this.detIsoDistance;
 		this.detPixel = detPx;
 		this.detSpacing = detSpc;
-		float[] aux = {this.detPixel[0] * this.detSpacing[0],this.detPixel[1] * this.detSpacing[1]};
+		double[] aux = {this.detPixel[0] * this.detSpacing[0],this.detPixel[1] * this.detSpacing[1]};
 		this.detectorSize = aux;
-		aux[0] = 1;
-		aux[1] = 1;
-		this.coneAngle = aux;
+		double[] aux2 = {Math.atan2((this.detectorSize[0]), this.D*2.0),Math.atan2((this.detectorSize[1]), this.D*2.0)};
+		this.coneAngle = aux2;
 	}
 	
 	public Grid3D coneProject(	BreastPhantom breastP,	//Breast phantom.
@@ -91,9 +89,11 @@ public class ConeProjection {
 		
 		double dTheta = (angleRange[1] - angleRange[0])/numberOfProjections;
 		for (int i = 0;i<=numberOfProjections;i++)
-		{
+		{			
 			double theta = angleRange[0] + i*dTheta;
+			
 			System.out.println(theta);
+			
 			
 		}
 		

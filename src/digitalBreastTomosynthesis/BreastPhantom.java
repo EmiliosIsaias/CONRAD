@@ -54,8 +54,12 @@ public class BreastPhantom extends Grid3D{
 						double gauss = (1.0/Math.sqrt(2.0*Math.PI)*sigmaY*sigmaZ) *
 								Math.exp(-((y_2/(2f * Math.pow(sigmaY,2)))+(z_2/(2f * Math.pow(sigmaZ,2)))));
 						//Add some little balls in the phantom.
-						if (x <= gauss){super.addAtIndex(i,j,k,(float)gauss);}
-						else{super.addAtIndex(i, j, k, 0.f);}
+						if (x <= gauss){
+							super.addAtIndex(i,j,k,(float)gauss);
+						}
+						else{
+							super.addAtIndex(i, j, k, 0.f);
+						}
 					}
 				}
 			}
@@ -72,7 +76,8 @@ public class BreastPhantom extends Grid3D{
 		int[] nP = {100,100};
 		float[] sp = {1,0.5f};
 		BreastPhantom bp = new BreastPhantom(width,height,depth);
-		System.out.println(bp.getOrigin());
+		
+		System.out.println(bp.getOrigin()[0]);
 		bp.show();
 		ConeProjection cp = new ConeProjection(200,angleR,250f,60f,nP,sp);
 		Grid3D sino = cp.coneProject(bp, 1);
