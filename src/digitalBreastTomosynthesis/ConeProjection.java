@@ -4,9 +4,14 @@
 package digitalBreastTomosynthesis;
 
 import edu.stanford.rsl.conrad.geometry.shapes.simple.Box;
+import edu.stanford.rsl.conrad.geometry.shapes.simple.PointND;
+import edu.stanford.rsl.conrad.geometry.shapes.simple.StraightLine;
+
+import java.util.ArrayList;
 
 import edu.stanford.rsl.conrad.data.numeric.Grid3D;
 import edu.stanford.rsl.conrad.geometry.transforms.Translation;
+import edu.stanford.rsl.conrad.numerics.SimpleVector;
 
 /**
  * @author Emilio Isaias-Camacho
@@ -91,7 +96,29 @@ public class ConeProjection {
 		for (int i = 0;i<=numberOfProjections;i++)
 		{			
 			double theta = angleRange[0] + i*dTheta;
-			
+			//Source point. Moving along the y and z plane and being constant (0) over x axis.
+			PointND src = new PointND();			
+			double[] aux = {0, this.sourceIsoDistance*Math.cos(theta),
+							this.sourceIsoDistance*Math.sin(theta)};
+			SimpleVector src2 = new SimpleVector(aux);
+			src.setCoordinates(src2);
+			for (int a = 0;a <= detPixel[0]; a++){
+				for (int b = 0;b <= detPixel[1];b++){
+					aux[0] = a - this.detectorSize[0]/2f;	// X component of the detector element
+					aux[1] = -this.detIsoDistance;			// Y component is constant.
+					aux[2] = b - this.detectorSize[1]/2f;	// Z component of the detector element.
+					SimpleVector detVec = new SimpleVector(aux);
+					PointND detPT = new PointND();
+					detPT.setCoordinates(detVec);
+					StraightLine line = new StraightLine(detPT, src);
+					line.normalize();
+					ArrayList <PointND> cutSites = auxBox.intersect(line);
+					if (cutSites.size() == 0){
+						continue;
+					}
+					
+				}
+			}
 			System.out.println(theta);
 			
 			
