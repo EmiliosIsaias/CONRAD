@@ -10,6 +10,7 @@ import edu.stanford.rsl.conrad.geometry.shapes.simple.StraightLine;
 import java.util.ArrayList;
 
 import edu.stanford.rsl.conrad.data.numeric.Grid3D;
+import edu.stanford.rsl.conrad.data.numeric.InterpolationOperators;
 import edu.stanford.rsl.conrad.geometry.transforms.Translation;
 import edu.stanford.rsl.conrad.numerics.SimpleVector;
 
@@ -93,7 +94,7 @@ public class ConeProjection {
 		auxBox.applyTransform(t);
 		
 		double dTheta = (angleRange[1] - angleRange[0])/numberOfProjections;
-		for (int i = 0;i<=numberOfProjections;i++)
+		for (int i = 0;i<numberOfProjections;++i)
 		{			
 			double theta = angleRange[0] + i*dTheta;
 			//Source point. Moving along the y and z plane and being constant (0) over x axis.
@@ -102,11 +103,12 @@ public class ConeProjection {
 							this.sourceIsoDistance*Math.sin(theta)};
 			SimpleVector src2 = new SimpleVector(aux);
 			src.setCoordinates(src2);
-			for (int a = 0;a <= detPixel[0]; a++){
-				for (int b = 0;b <= detPixel[1];b++){
+			for (int a = 0;a <= detPixel[0]; ++a){
+				for (int b = 0;b <= detPixel[1];++b){
 					aux[0] = a - this.detectorSize[0]/2f;	// X component of the detector element
 					aux[1] = -this.detIsoDistance;			// Y component is constant.
 					aux[2] = b - this.detectorSize[1]/2f;	// Z component of the detector element.
+					double sum = 0.0;
 					SimpleVector detVec = new SimpleVector(aux);
 					PointND detPT = new PointND();
 					detPT.setCoordinates(detVec);
@@ -116,12 +118,29 @@ public class ConeProjection {
 					if (cutSites.size() == 0){
 						continue;
 					}
-					
+					PointND init = cutSites.get(0);
+					PointND end = cutSites.get(1);
+					double dist = init.euclideanDistance(end);
+					if (dist == 0){
+						continue;
+					}
+					double[] step = {(end.getCoordinates()[0]-init.getCoordinates()[0])/(dist*fs),
+							(end.getCoordinates()[1]-init.getCoordinates()[1])/(dist*fs),
+							(end.getCoordinates()[2]-init.getCoordinates()[2])/(dist*fs)};
+					for (int k = 0; k< dist*fs; k++){
+						double x = init.getCoordinates()[0] + step[0]*k;
+	        			double y = init.getCoordinates()[1] + step[1]*k;
+	        			double z = init.getCoordinates()[2] + step[2]*k;
+	    				if(x < 0 || y < 0 || z < 0 ||
+	    						x >= breastP.getSize()[0]-1 || y >= breastP.getSize()[1]-1 ||
+	    						z >= breastP.getSize()[2]-1){
+	    					continue;}
+	    				sum += InterpolationOperators.interpolateLinear(breastP, x, y, z);
+					}
+					sino.setAtIndex(a, b, i, (float) sum);
 				}
 			}
-			System.out.println(theta);
-			
-			
+			//System.out.println(theta);			
 		}
 		
 		return sino;

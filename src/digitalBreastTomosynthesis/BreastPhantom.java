@@ -74,16 +74,16 @@ public class BreastPhantom extends Grid3D{
 		width = 152;
 		height = 140;
 		depth = 162;
-		double[] angleR = {0,(float) Math.PI};
-		int[] nP = {100,100};
-		float[] sp = {1,0.5f};
+		double[] angleR = {(float) Math.PI/2.f,(float) Math.PI};
+		int[] nP = {200,200};
+		float[] sp = {1,1};
 		BreastPhantom bp = new BreastPhantom(width,height,depth);
 		for (int count = 0;count < bp.getOrigin().length; count++){
 			System.out.println(bp.getOrigin()[count]);
 		}
 		bp.show();
-		//ConeProjection cp = new ConeProjection(200,angleR,250f,60f,nP,sp);
-		//Grid3D sino = cp.coneProject(bp, 1);
-		//sino.show();
+		ConeProjection cp = new ConeProjection(15,angleR,250f,60f,nP,sp);
+		Grid3D sino = cp.coneProject(bp, 1);
+		sino.show();
 	}
 }
