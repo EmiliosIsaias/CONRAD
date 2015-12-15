@@ -85,17 +85,19 @@ public class ConeProjection {
 		Grid3D sino = new Grid3D((int)detectorSize[0],(int)detectorSize[1],numberOfProjections);
 		//Create a bounding box in 3D for finding the intersections of the x-ray beam with the phantom edges.
 		//Centered in the origin.
-		Translation t = new Translation(-(breastP.getSize()[0]*breastP.getSpacing()[0])/2,
-										-(breastP.getSize()[1]*breastP.getSpacing()[1])/2,
-										-(breastP.getSize()[2]*breastP.getSpacing()[2])/2);		
+		Translation t = new Translation(//-(breastP.getSize()[0]*breastP.getSpacing()[0])/2,
+										//-(detectorSize[0]*detSpacing[0])/2f,
+										-(detectorSize[0]*detSpacing[0])/2f,
+										-(breastP.getSize()[1]*breastP.getSpacing()[1])/2f,
+										-(breastP.getSize()[2]*breastP.getSpacing()[2])/2f);		
 		Box auxBox = new Box(	(breastP.getSize()[0]*breastP.getSpacing()[0]),
 								(breastP.getSize()[1]*breastP.getSpacing()[1]),
 								(breastP.getSize()[2]*breastP.getSpacing()[2]));
 		auxBox.applyTransform(t);
-		
 		double dTheta = (angleRange[1] - angleRange[0])/numberOfProjections;
+		sino.setSpacing(detSpacing[0],detSpacing[1],dTheta);
 		for (int i = 0;i<numberOfProjections;++i)
-		{			
+		{
 			double theta = angleRange[0] + i*dTheta;
 			//Source point. Moving along the y and z plane and being constant (0) over x axis.
 			PointND src = new PointND();			
@@ -128,10 +130,9 @@ public class ConeProjection {
 							(end.getCoordinates()[1]-init.getCoordinates()[1])/(dist*fs),
 							(end.getCoordinates()[2]-init.getCoordinates()[2])/(dist*fs)};
 					for (int k = 0; k< dist*fs; k++){
-						double[] trans = auxBox.getMin().getCoordinates();
-						double x = (init.getCoordinates()[0] + step[0]*k) - trans[0];
-	        			double y = (init.getCoordinates()[1] + step[1]*k) - trans[1];
-	        			double z = (init.getCoordinates()[2] + step[2]*k) - trans[2];
+						double x = (init.getCoordinates()[0] + step[0]*k) - t.getData().copyAsDoubleArray()[0];
+	        			double y = (init.getCoordinates()[1] + step[1]*k) - t.getData().copyAsDoubleArray()[1];
+	        			double z = (init.getCoordinates()[2] + step[2]*k) - t.getData().copyAsDoubleArray()[2];
 	    				if(x < 0 || y < 0 || z < 0 ||
 	    						x >= breastP.getSize()[0]-1 || y >= breastP.getSize()[1]-1 ||
 	    						z >= breastP.getSize()[2]-1){

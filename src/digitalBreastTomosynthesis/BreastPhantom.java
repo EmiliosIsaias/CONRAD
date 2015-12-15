@@ -36,7 +36,8 @@ public class BreastPhantom extends Grid3D{
 		*/
 		double[] dims = {width*getSpacing()[0],height*getSpacing()[1],depth*getSpacing()[2]};
 		this.dimensions = dims;
-		//Getting a standard deviation which gives a proper scale to the gauss curve.
+		//Getting a standard deviation which gives a proper scale to the gauss curve depending on the size of
+		//the phantom.
 		double SS = Math.sqrt(width);
 		float sigmaY = (float) ((1*height)/SS);
 		float sigmaZ = (float) ((2*depth)/SS);
@@ -75,15 +76,15 @@ public class BreastPhantom extends Grid3D{
 		height = 140;
 		depth = 162;
 		double[] angleR = {(float) -Math.PI/6f,(float) Math.PI/6f};
-		int[] nP = {200,200};
+		int[] nP = {210,200};
 		float[] sp = {1,1};
 		BreastPhantom bp = new BreastPhantom(width,height,depth);
 		for (int count = 0;count < bp.getOrigin().length; count++){
 			System.out.println(bp.getOrigin()[count]);
 		}
 		bp.show();
-		ConeProjection cp = new ConeProjection(15,angleR,150f,60f,nP,sp);
-		Grid3D sino = cp.coneProject(bp, 1);
+		ConeProjection cp = new ConeProjection(15,angleR,460f,60f,nP,sp);
+		Grid3D sino = cp.coneProject(bp, 0.5f);
 		sino.show();
 	}
 }
