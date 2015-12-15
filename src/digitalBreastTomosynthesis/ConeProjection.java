@@ -128,14 +128,16 @@ public class ConeProjection {
 							(end.getCoordinates()[1]-init.getCoordinates()[1])/(dist*fs),
 							(end.getCoordinates()[2]-init.getCoordinates()[2])/(dist*fs)};
 					for (int k = 0; k< dist*fs; k++){
-						double x = init.getCoordinates()[0] + step[0]*k;
-	        			double y = init.getCoordinates()[1] + step[1]*k;
-	        			double z = init.getCoordinates()[2] + step[2]*k;
+						double[] trans = auxBox.getMin().getCoordinates();
+						double x = (init.getCoordinates()[0] + step[0]*k) - trans[0];
+	        			double y = (init.getCoordinates()[1] + step[1]*k) - trans[1];
+	        			double z = (init.getCoordinates()[2] + step[2]*k) - trans[2];
 	    				if(x < 0 || y < 0 || z < 0 ||
 	    						x >= breastP.getSize()[0]-1 || y >= breastP.getSize()[1]-1 ||
 	    						z >= breastP.getSize()[2]-1){
 	    					continue;}
-	    				sum += InterpolationOperators.interpolateLinear(breastP, x, y, z);
+	    				float val = InterpolationOperators.interpolateLinear(breastP, x, y, z); 
+	    				sum += val;
 					}
 					sino.setAtIndex(a, b, i, (float) sum);
 				}
