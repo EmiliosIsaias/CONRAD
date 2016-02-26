@@ -163,7 +163,7 @@ public abstract class OpenCLUtil {
 					break;
 				}
 			}
-			context = CLContext.create(device);				
+			context = CLContext.create(device);
 		} else {
 
 			/*try {
