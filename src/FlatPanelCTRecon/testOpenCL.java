@@ -219,8 +219,8 @@ public class testOpenCL {
 			//.put2DRangeKernel(kernel, 0, 0, globalWorkSizeBeta, globalWorkSizeT, localWorkSize, localWorkSize)  maybe add this worksize?
 			.finish()
 			.putReadBuffer(resultBPGrid, true)
-			.finish();
-;
+			.finish();;
+
 		// write resultGrid back to grid2D
 		Grid2D result = new Grid2D(sizeRecon[0], sizeRecon[1]);
 		result.setSpacing(pixelSpacingRecon[0], pixelSpacingRecon[1]);
@@ -241,7 +241,10 @@ public class testOpenCL {
 		
 		// Exercise Sheet 4 - 1.		
 		
-		myphantom p = new myphantom(200,200);
+		myphantom p = new myphantom(128,128);					/* Important!
+		The size of the phantom should be as large as the hardware capabilities of the local system!
+		Considering using a power of two for better performance.
+		*/
 		int[] size = p.getSize();
 		/*OpenCLGrid2D phantomCL = new OpenCLGrid2D(p, context, device);
 		OpenCLGrid2D addPhanCL = new OpenCLGrid2D(p, context, device);

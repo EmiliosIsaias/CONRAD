@@ -4,17 +4,17 @@ import java.nio.FloatBuffer;
 
 import ij.ImageJ;
 
-import com.jogamp.opencl.CLImageFormat.ChannelOrder;
-import com.jogamp.opencl.CLImageFormat.ChannelType;
+//import com.jogamp.opencl.CLImageFormat.ChannelOrder;
+//import com.jogamp.opencl.CLImageFormat.ChannelType;
 import com.jogamp.opencl.CLMemory.Mem;
 
 import edu.stanford.rsl.conrad.data.numeric.Grid2D;
 import edu.stanford.rsl.conrad.data.numeric.NumericPointwiseOperators;
 import edu.stanford.rsl.conrad.data.numeric.opencl.OpenCLGrid2D;
-import edu.stanford.rsl.conrad.filtering.RampFilteringTool;
-import edu.stanford.rsl.conrad.filtering.rampfilters.HanningRampFilter;
-import edu.stanford.rsl.conrad.filtering.rampfilters.RamLakRampFilter;
-import edu.stanford.rsl.conrad.filtering.rampfilters.RampFilter;
+//import edu.stanford.rsl.conrad.filtering.RampFilteringTool;
+//import edu.stanford.rsl.conrad.filtering.rampfilters.HanningRampFilter;
+//import edu.stanford.rsl.conrad.filtering.rampfilters.RamLakRampFilter;
+//import edu.stanford.rsl.conrad.filtering.rampfilters.RampFilter;
 import edu.stanford.rsl.conrad.opencl.OpenCLUtil;
 import edu.stanford.rsl.conrad.utils.CONRAD;
 
@@ -22,8 +22,8 @@ import com.jogamp.opencl.CLBuffer;
 import com.jogamp.opencl.CLCommandQueue;
 import com.jogamp.opencl.CLContext;
 import com.jogamp.opencl.CLDevice;
-import com.jogamp.opencl.CLImage2d;
-import com.jogamp.opencl.CLImageFormat;
+//import com.jogamp.opencl.CLImage2d;
+//import com.jogamp.opencl.CLImageFormat;
 import com.jogamp.opencl.CLKernel;
 import com.jogamp.opencl.CLProgram;
 
@@ -113,23 +113,23 @@ public class testOpenCL {
 		
 		int imageSize = grid1.getSize()[0] * grid1.getSize()[1];
 		
-		CLImageFormat format = new CLImageFormat(ChannelOrder.INTENSITY, ChannelType.FLOAT);
+		//CLImageFormat format = new CLImageFormat(ChannelOrder.INTENSITY, ChannelType.FLOAT);
 		
 		CLBuffer<FloatBuffer> imageBuffer = context.createFloatBuffer(imageSize, Mem.READ_ONLY);
 		for (int i=0;i<grid1.getBuffer().length;++i){
 			imageBuffer.getBuffer().put(grid1.getBuffer()[i]);
 		}
 		imageBuffer.getBuffer().rewind();
-		CLImage2d<FloatBuffer> imageGrid1 = context.createImage2d(
-				imageBuffer.getBuffer(), grid1.getSize()[0], grid1.getSize()[1], format);
+		//CLImage2d<FloatBuffer> imageGrid1 = context.createImage2d(
+		//		imageBuffer.getBuffer(), grid1.getSize()[0], grid1.getSize()[1], format);
 		
 		CLBuffer<FloatBuffer> imageBuffer2 = context.createFloatBuffer(imageSize, Mem.READ_ONLY);
 		for (int i=0;i<grid1.getBuffer().length;++i){
 			imageBuffer2.getBuffer().put(grid2.getBuffer()[i]);
 		}
 		imageBuffer2.getBuffer().rewind();
-		CLImage2d<FloatBuffer> imageGrid2 = context.createImage2d(
-				imageBuffer2.getBuffer(), grid2.getSize()[0], grid2.getSize()[1], format);
+		//CLImage2d<FloatBuffer> imageGrid2 = context.createImage2d(
+		//		imageBuffer2.getBuffer(), grid2.getSize()[0], grid2.getSize()[1], format);
 
 		// create memory for result grid
 		CLBuffer<FloatBuffer> resultGrid = context.createFloatBuffer(imageSize, Mem.WRITE_ONLY);
@@ -180,7 +180,7 @@ public class testOpenCL {
 		int gridReconSizeY = sizeRecon;
 		int imageSize = gridReconSizeX * gridReconSizeY;
 		
-		CLImageFormat format = new CLImageFormat(ChannelOrder.INTENSITY, ChannelType.FLOAT);
+		//CLImageFormat format = new CLImageFormat(ChannelOrder.INTENSITY, ChannelType.FLOAT);
 		
 		// create memory for result backprojection grid
 		CLBuffer<FloatBuffer> resultBPGrid = context.createFloatBuffer(imageSize, Mem.WRITE_ONLY);
@@ -227,7 +227,7 @@ public class testOpenCL {
 		CONRAD.setup();
 		testOpenCL o = new testOpenCL();
 		CLContext context = OpenCLUtil.createContext();
-		CLDevice[] devices = context.getDevices();
+		//CLDevice[] devices = context.getDevices();
 		CLDevice device = context.getMaxFlopsDevice();
 		
 		// Exercise Sheet 4 - 1.		
