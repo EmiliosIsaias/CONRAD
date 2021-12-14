@@ -11,11 +11,13 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 import edu.stanford.rsl.conrad.geometry.shapes.simple.PointND;
+import edu.stanford.rsl.conrad.io.VTKMeshIO;
 import edu.stanford.rsl.conrad.numerics.SimpleMatrix;
 
 /**
  * Class to read and store a mesh in a legacy .vtk polydata file. A triangular mesh as produced by Paraview  or the 
  * itkMeshFileWriter is assumed. The reader-method builds upon VTKMeshReader implemented by Marco Boegel. 
+ * Extended to meshes featuring deformation vectors at each mesh vertex by Tobias Geimer. 
  * @author Mathias Unberath
  *
  */
@@ -45,6 +47,12 @@ public class Mesh{
 	 * The matrix containing the connectivity information.
 	 */
 	private SimpleMatrix triangles;
+	
+	/**
+	 * The matrix containing the deformation vectors.
+	 */
+	private SimpleMatrix deformations;
+	
 	
 	//==========================================================================================
 	// METHODS
@@ -89,6 +97,22 @@ public class Mesh{
 	}
 	
 	/**
+	 * Sets the deformations at each vertex.
+	 * @param deform The deformation.
+	 */
+	public void setDeformation(SimpleMatrix deform){
+		this.deformations = deform;
+	}
+	
+	/**
+	 * Getter for the deformation information.
+	 * @return The deformation information.
+	 */
+	public SimpleMatrix getDeformation(){
+		return this.deformations;
+	}
+	
+	/**
 	 * Sets the vertices, e.g points, and number of vertices.
 	 * @param p The matrix containing the vertices.
 	 */
@@ -96,6 +120,17 @@ public class Mesh{
 		this.points = p;
 		this.numPoints = p.getRows();
 		this.dimension = p.getCols();
+	}
+	
+	/**
+	 * Sets the vertices, e.g points, and number of vertices.
+	 * @param p The ArrayList containing the vertices.
+	 */
+	public void setPoints(ArrayList<PointND> p){
+		SimpleMatrix m = toSimpleMatrix(p); 
+		this.points = m;
+		this.numPoints = m.getRows();
+		this.dimension = m.getCols();
 	}
 	
 	/**
@@ -107,80 +142,21 @@ public class Mesh{
 	}
 		
 	/**
-	 * Method to read a triangular mesh in legacy .vtk polydata format. 
+	 * Convenience method to read a triangular mesh in legacy .vtk polydata format using {@link VTKMeshIO}.
 	 * @param filename	The filename of the mesh to be read.
 	 * @throws IOException if .vtk format does not match expected format
 	 */
 	public void readMesh(String filename) throws IOException{
+		VTKMeshIO reader = new VTKMeshIO(filename);
+		reader.read();
 		
-		ArrayList<PointND> points = new ArrayList<PointND>();
-		ArrayList<PointND> triangles = new ArrayList<PointND>();
-		
-		FileReader fr = new FileReader(filename);
-		BufferedReader br = new BufferedReader(fr);
-
-		// read and discard header information
-		br.readLine();
-		br.readLine();
-		br.readLine();
-		br.readLine();
-
-		String line = br.readLine();
-		StringTokenizer tok = new StringTokenizer(line);
-		String t = tok.nextToken(); // skip "points"
-		t = tok.nextToken();
-		int numPoints = Integer.parseInt(t);
-				
-		// read points
-		// the logic here allows more than one single point per line
-		for (int i = 0; i < numPoints;){
-			line = br.readLine();
-			tok = new StringTokenizer(line);
-			int nrPts = tok.countTokens();
-			nrPts /= 3;
-			for (int j = 0; j < nrPts; j++){
-				PointND p = new PointND(Float.parseFloat(tok.nextToken()), Float.parseFloat(tok.nextToken()), Float.parseFloat(tok.nextToken()));
-				points.add(p);
-			}
-			i += nrPts;
-		}
-		// read connectivity information
-		// assumes triangle mesh, hence first number in connectivity information needs to be 3
-		// logic allows more than one triangle per line
-		line = br.readLine();
-		if(line.isEmpty()){
-			line = br.readLine();
-		}
-		tok = new StringTokenizer(line);
-		tok.nextToken(); // skip "polygons"
-		int numTri =  Integer.parseInt(tok.nextToken());
-		for(int i = 0; i < numTri;){
-			line = br.readLine();
-			tok = new StringTokenizer(line);
-			int nTri = tok.countTokens();
-			nTri /= 4;
-			for(int j = 0; j < nTri; j++){
-				t = tok.nextToken();
-				if(Integer.parseInt(t) != 3){
-					br.close();
-					fr.close();
-					throw new IOException("VTK-Polydata file: Format not yet supported.");
-				}else{
-					PointND triangle = new PointND(Integer.parseInt(tok.nextToken()),Integer.parseInt(tok.nextToken()),Integer.parseInt(tok.nextToken()));
-					triangles.add(triangle);
-				}
-			}
-			i += nTri;
-		}
-		
-		br.close();	
-		fr.close();
-		
-		this.numPoints = numPoints;
-		this.points = toSimpleMatrix(points);
-		this.dimension = this.points.getCols();
-		this.numConnections = numTri;
-		this.triangles = toSimpleMatrix(triangles);
+		Mesh tmpMesh = reader.getMesh();
+		this.numPoints = tmpMesh.numPoints;
+		this.points = tmpMesh.getPoints();
+		this.dimension = tmpMesh.dimension;
+		this.numConnections = tmpMesh.numConnections;
+		this.triangles = tmpMesh.getConnectivity();
+		this.deformations = tmpMesh.getDeformation();
 	}
 
 	/**

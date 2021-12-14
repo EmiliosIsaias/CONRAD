@@ -1,5 +1,13 @@
 package edu.stanford.rsl.conrad.numerics;
 
+import java.util.Collection;
+import java.util.Iterator;
+
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
+import edu.stanford.rsl.conrad.numerics.SimpleMatrix.InversionType;
+import edu.stanford.rsl.conrad.utils.CONRAD;
+
 
 
 /**
@@ -170,10 +178,40 @@ public abstract class SimpleOperators {
 		return result;
 	}
 	
-
+	/**
+	 * 
+	 * @param in The vector to process
+	 * @param fct A generic function, e.g. the absolute value
+	 * @return a vector with the function applied to all elements
+	 */
+	public static SimpleVector elementWiseOperator(final SimpleVector in, DoubleFunction fct){
+		SimpleVector out = in.clone();
+		for (int i = 0; i < out.getLen(); i++) {
+			out.setElementValue(i, fct.f(out.getElement(i)));
+			
+		}
+		return out;
+	}
+	
 	// **************************************************************** //
 	// ******************* Matrix/Matrix operators ******************** //
 	// **************************************************************** //
+	/**
+	 * 
+	 * @param in The matrix to process
+	 * @param fct A generic function, e.g. the absolute value
+	 * @return a matrix with the function applied to all elements
+	 */
+	public static SimpleMatrix elementWiseOperator(final SimpleMatrix in, DoubleFunction fct){
+		SimpleMatrix out = in.clone();
+		for (int i = 0; i < out.getRows(); i++) {
+			for (int j = 0; j < out.getCols(); j++) {
+				out.setElementValue(i, j, fct.f(out.getElement(i, j)));
+			}
+		}
+		return out;
+	}
+	
 	/**
 	 * Computes the sum of provided matrices
 	 * @param addends  A comma-separated list or an array of matrices.
@@ -217,7 +255,32 @@ public abstract class SimpleOperators {
 		return result;
 	}
 	
-
+	/**
+	 * Computes the product of matrices, e.g. multiplyMatrices(m1,m2,m3,m4,m5) -> computes m1*m2*m3*m4*m5 and
+	 * returns the result, if only one matrix is given, this method returns the matrix itself.
+	 * @param matrices: several matrices 
+	 * @return the matrix product of all given matrices
+	 */
+	public static SimpleMatrix multiplyMatrices(SimpleMatrix... matrices) {
+		int count = 0;
+		SimpleMatrix cur_matrix = null;
+		SimpleMatrix matrix_product = null;
+		for(SimpleMatrix matrix: matrices) {
+			if(count == 1) {
+				matrix_product = SimpleOperators.multiplyMatrixProd(cur_matrix, matrix);
+				count++;
+			}else if(count > 1){
+				matrix_product = SimpleOperators.multiplyMatrixProd(matrix_product, matrix);
+				count++;
+			}else if(count == 0){
+				count++;
+				cur_matrix = matrix;
+				matrix_product = cur_matrix;
+			}
+		}
+		return matrix_product;
+	}
+	
 	public static SimpleMatrix multiplyElementWise(final SimpleMatrix... factors) {
 		final SimpleMatrix result = factors[0].clone();
 		for (int i = 1; i < factors.length; ++i)
@@ -281,7 +344,57 @@ public abstract class SimpleOperators {
 		return result;
 	}
 	
-
+	/**
+	 * Creates a new matrix which is composed of all input matrices, stacked on top of each other. 
+	 * All input matrices need to have the same number of columns.
+	 * @param parts  The matrices to concatenate.
+	 * @return  The vertically concatenated matrix.
+	 */
+	public static SimpleMatrix concatenateVertically(SimpleMatrix... parts) {
+		final int noParts = parts.length;
+		assert noParts >= 1 : new IllegalArgumentException("Supply at least one matrix to concatenate!");
+		final int[] noRows = new int[noParts];
+		final int noCols = parts[0].getCols();
+		final int[] accumulatedRowPosition = new int[noParts];
+		int totalLength = 0;
+		for (int i = 0; i < noParts; ++i) {
+			assert noCols != parts[i].getCols() : new IllegalArgumentException("Number of columns in all provided matrices needs to be the save for vertical concatenation!");
+			
+			noRows[i] = parts[i].getRows();
+			accumulatedRowPosition[i] = (i == 0) ? 0 : (accumulatedRowPosition[i-1] + noRows[i-1]);
+			totalLength += noRows[i];
+		}
+		SimpleMatrix result = new SimpleMatrix(totalLength, noCols);
+		for (int i = 0; i < noParts; ++i) result.setSubMatrixValue(accumulatedRowPosition[i],0,parts[i]);
+		return result;
+	}
+	
+	/**
+	 * Creates a new matrix which is composed of all input matrices, positioned next to each other. 
+	 * All input matrices need to have the same number of rows.
+	 * @param parts  The matrices to concatenate.
+	 * @return  The vertically concatenated matrix.
+	 */
+	public static SimpleMatrix concatenateHorizontally(SimpleMatrix... parts) {
+		final int noParts = parts.length;
+		assert noParts >= 1 : new IllegalArgumentException("Supply at least one matrix to concatenate!");
+		final int[] noCols = new int[noParts];
+		final int noRows = parts[0].getRows();
+		final int[] accumulatedColPosition = new int[noParts];
+		int totalLength = 0;
+		for (int i = 0; i < noParts; ++i) {
+			assert noRows != parts[i].getRows() : new IllegalArgumentException("Number of columns in all provided matrices needs to be the save for vertical concatenation!");
+			
+			noCols[i] = parts[i].getCols();
+			accumulatedColPosition[i] = (i == 0) ? 0 : (accumulatedColPosition[i-1] + noCols[i-1]);
+			totalLength += noCols[i];
+		}
+		SimpleMatrix result = new SimpleMatrix(totalLength, noRows);
+		for (int i = 0; i < noParts; ++i) result.setSubMatrixValue(0,accumulatedColPosition[i],parts[i]);
+		return result;
+	}
+	
+	
 	// **************************************************************** //
 	// ******************* Matrix/Vector operators ******************** //
 	// **************************************************************** //
@@ -312,6 +425,202 @@ public abstract class SimpleOperators {
 		for (int c = 0; c < M.getCols(); ++c)
 			result.setElementValue(c, SimpleOperators.multiplyInnerProd(v, M.getCol(c)));
 		return result;
+	}
+	
+	/**
+	 * Performs an interpolation between two rigid transformations (rotation and translation) 
+	 * matrices, represented as 4x4 affine matrices.
+	 * 
+	 * @param A First 3D Rigid transform matrix of size 4x4
+	 * @param B Second 3D Rigid transform matrix of size 4x4
+	 * @param weightA weight for first rigid transform
+	 * @param weightB weight for second transform
+	 * 
+	 * @return interpolated rigid transform matrix of size 4x4
+	 */
+	public static SimpleMatrix interpolateRigidTransforms3D(SimpleMatrix A, SimpleMatrix B, double weightA, double weightB){
+		assert(A.isRigidMotion3D(CONRAD.DOUBLE_EPSILON) && B.isRigidMotion3D(CONRAD.DOUBLE_EPSILON)) : new IllegalArgumentException("Matrix interpolation requires 3D rigid motion matrices (rotation + translatio only) of size 4x4!");
+		
+		boolean considerTranslationOnly = A.getSubMatrix(0, 0, 3, 3).isIdentity(CONRAD.DOUBLE_EPSILON);
+		considerTranslationOnly &= B.getSubMatrix(0, 0, 3, 3).isIdentity(CONRAD.DOUBLE_EPSILON);
+		
+		// make sure weights add up to 1
+		double sum = (weightA+weightB);
+		weightA /= sum;
+		weightB /= sum;
+		
+		SimpleMatrix outR = null;
+		if(!considerTranslationOnly){
+			SimpleMatrix firstRpart = A.getSubMatrix(0,0,3,3);
+			SimpleMatrix scndRpart = B.getSubMatrix(0,0,3,3);
+			SimpleMatrix firstInverseRpart = firstRpart.inverse(InversionType.INVERT_SVD);
+			SimpleMatrix T = SimpleOperators.multiplyMatrixProd(firstInverseRpart,scndRpart);
+			Matrix jamT = new Matrix(T.copyAsDoubleArray());
+			EigenvalueDecomposition evd = jamT.eig();
+			double[] real = evd.getRealEigenvalues();
+			double[] imag = evd.getImagEigenvalues();
+			for (int i = 0; i < 3; i++) {
+				double angle = Math.atan2(imag[i], real[i]);
+				angle*=weightB;
+				real[i] = Math.cos(angle);
+				imag[i] = Math.sin(angle);
+			}
+			Matrix newR = evd.getV().times(evd.getD()).times(evd.getV().inverse());
+			outR = SimpleOperators.multiplyMatrixProd(firstRpart, new SimpleMatrix(newR.getArrayCopy()));
+		}
+		
+		SimpleVector outCol = A.getSubCol(0, 3, 3).multipliedBy(weightA);
+		outCol.add(B.getSubCol(0, 3, 3).multipliedBy(weightB));
+		SimpleMatrix out = new SimpleMatrix(4,4);
+		out.identity();
+		out.setSubColValue(0, 3, outCol);
+		if(!considerTranslationOnly){
+			out.setSubMatrixValue(0, 0, outR);
+		}
+		return out;
+	}
+	
+	/**
+	 * Performs an interpolation between two 2D rigid transformations (rotation and translation)
+	 * matrices, represented as 3x3 affine matrices.
+	 * 
+	 * @param A First 2D Rigid transform matrix of size 3x3
+	 * @param B Second 2D Rigid transform matrix of size 3x3
+	 * @param weightA weight for first rigid transform
+	 * @param weightB weight for second transform
+	 * 
+	 * @return interpolated rigid transform matrix of size 3x3
+	 */
+	public static SimpleMatrix interpolateRigidTransforms2D(SimpleMatrix A, SimpleMatrix B, double weightA, double weightB){
+		assert(A.isRigidMotion2D(CONRAD.DOUBLE_EPSILON) && B.isRigidMotion2D(CONRAD.DOUBLE_EPSILON)) : new IllegalArgumentException("Matrix interpolation requires 2D rigid motion matrices (rotation + translatio only) of size 3x3!");
+		
+		boolean considerTranslationOnly = A.getSubMatrix(0, 0, 2, 2).isIdentity(CONRAD.DOUBLE_EPSILON);
+		considerTranslationOnly &= B.getSubMatrix(0, 0, 2, 2).isIdentity(CONRAD.DOUBLE_EPSILON);
+		
+		// make sure weights add up to 1
+		double sum = (weightA+weightB);
+		weightA /= sum;
+		weightB /= sum;
+		
+		SimpleMatrix outR = null;
+		if(!considerTranslationOnly){
+			SimpleMatrix firstRpart = A.getSubMatrix(0,0,2,2);
+			SimpleMatrix scndRpart = B.getSubMatrix(0,0,2,2);
+			SimpleMatrix firstInverseRpart = firstRpart.inverse(InversionType.INVERT_SVD);
+			SimpleMatrix T = SimpleOperators.multiplyMatrixProd(firstInverseRpart,scndRpart);
+			Matrix jamT = new Matrix(T.copyAsDoubleArray());
+			EigenvalueDecomposition evd = jamT.eig();
+			double[] real = evd.getRealEigenvalues();
+			double[] imag = evd.getImagEigenvalues();
+			for (int i = 0; i < 2; i++) {
+				double angle = Math.atan2(imag[i], real[i]);
+				angle*=weightB;
+				real[i] = Math.cos(angle);
+				imag[i] = Math.sin(angle);
+			}
+			Matrix newR = evd.getV().times(evd.getD()).times(evd.getV().inverse());
+			outR = SimpleOperators.multiplyMatrixProd(firstRpart, new SimpleMatrix(newR.getArrayCopy()));
+		}
+		
+		SimpleVector outCol = A.getSubCol(0, 2, 2).multipliedBy(weightA);
+		outCol.add(B.getSubCol(0, 2, 2).multipliedBy(weightB));
+		SimpleMatrix out = new SimpleMatrix(3,3);
+		out.identity();
+		out.setSubColValue(0, 2, outCol);
+		if(!considerTranslationOnly){
+			out.setSubMatrixValue(0, 0, outR);
+		}
+		return out;
+	}
+	
+	/**
+	 * Computes the mean rigid transform of a 3D transformation
+	 * @param inputTransforms A collection of rigid transform matrices of size 4x4
+	 * @return The mean rigid transform of the collections transform
+	 */
+	public static SimpleMatrix getMeanRigidTransform3D(Iterable<SimpleMatrix> inputTransforms){
+		Iterator<SimpleMatrix> iter = inputTransforms.iterator();
+		SimpleMatrix compareOut = SimpleMatrix.I_4.clone();
+		int ctr = 0;
+		while(iter.hasNext()){
+			compareOut = SimpleOperators.interpolateRigidTransforms3D(
+					iter.next(),
+					compareOut,
+					1, ctr);
+			ctr++;
+		}
+		return compareOut;
+	}
+	
+	
+	/**
+	 * Computes the mean rigid transform of a collection of 2D transformation
+	 * @param inputTransforms A collection of 2D rigid transform matrices of size 3x3
+	 * @return The mean rigid transform of the collections transform
+	 */
+	public static SimpleMatrix getMeanRigidTransform2D(Iterable<SimpleMatrix> inputTransforms){
+		Iterator<SimpleMatrix> iter = inputTransforms.iterator();
+		SimpleMatrix compareOut = SimpleMatrix.I_3.clone();
+		int ctr = 0;
+		while(iter.hasNext()){
+			compareOut = SimpleOperators.interpolateRigidTransforms2D(
+					iter.next(),
+					compareOut,
+					1, ctr);
+			ctr++;
+		}
+		return compareOut;
+	}
+	
+	/**
+	 * method to compute the Pluecker dual coordinates of a vector L
+	 * @param L: SimpleVector having 6 elements
+	 * @return: SimpleMatrix of size 4x4
+	 */
+	public static SimpleMatrix getPlueckerMatrixDual(SimpleVector L) {
+		
+		SimpleMatrix L_out = new SimpleMatrix(4, 4);
+		// first row
+		L_out.setElementValue(0, 1, +L.getElement(5));
+		L_out.setElementValue(0, 2, -L.getElement(4));
+		L_out.setElementValue(0, 3, +L.getElement(3));
+		
+		// second row
+		L_out.setElementValue(1, 0, -L.getElement(5));
+		L_out.setElementValue(1, 2, +L.getElement(2));
+		L_out.setElementValue(1, 3, -L.getElement(1));
+		
+		// third row
+		L_out.setElementValue(2, 0, +L.getElement(4));
+		L_out.setElementValue(2, 1, -L.getElement(2));
+		L_out.setElementValue(2, 3, +L.getElement(0));
+		
+		// last row
+		L_out.setElementValue(3, 0, -L.getElement(3));
+		L_out.setElementValue(3, 1, +L.getElement(1));
+		L_out.setElementValue(3, 2, -L.getElement(0));
+		
+		return L_out;
+		
+	}
+
+
+	/**
+	 * method to compute the Pluecker join of a line L and a point X
+	 * @param L: line L as SimpleVector (6 entries)
+	 * @param X: point X as SimpleVector (4 entries)
+	 * @return: SimpleVector of size 4x1 representing a plane
+	 */
+	public static SimpleVector getPlueckerJoin(SimpleVector L, SimpleVector X) {
+		
+		//* calculate plane E (4x1) from [~L]x * X *//
+		double v1 = + X.getElement(1)*L.getElement(5) - X.getElement(2)*L.getElement(4) + X.getElement(3)*L.getElement(3);
+		double v2 = - X.getElement(0)*L.getElement(5) + X.getElement(2)*L.getElement(2) - X.getElement(3)*L.getElement(1);
+		double v3 = + X.getElement(0)*L.getElement(4) - X.getElement(1)*L.getElement(2) + X.getElement(3)*L.getElement(0);
+		double v4 = - X.getElement(0)*L.getElement(3) + X.getElement(1)*L.getElement(1) - X.getElement(2)*L.getElement(0);
+		
+		return new SimpleVector(v1, v2, v3, v4);
+		
 	}
 
 

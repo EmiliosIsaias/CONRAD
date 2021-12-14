@@ -165,7 +165,7 @@ public class NrrdFileReader extends ImagePlus
 		String thisLine,noteType,noteValue, noteValuelc;
 
 		fi.fileType = FileInfo.GRAY8;  // just assume this for the mo
-		spatialCal.setUnit("micron");  // just assume this for the mo    
+		spatialCal.setUnit("mm");  // just assume this for the mo    
 		fi.fileFormat = FileInfo.RAW;
 		fi.nImages = 1;
 
@@ -262,19 +262,6 @@ public class NrrdFileReader extends ImagePlus
 					fi.centers[i]=getSubField(thisLine,i);
 				}
 			}
-
-			if (noteType.equals("axis mins") || noteType.equals("axismins")) {
-				double[] axismins=new double[fi.dimension];
-				for(int i=0;i<fi.dimension;i++) {
-					// TOFIX - this order of allocations is not a given!
-					// NB xOrigin are in pixels, whereas axismins are of course
-					// in units; these are converted later
-					axismins[i]=Double.valueOf(getSubField(thisLine,i)).doubleValue();
-					if(i==0) spatialCal.xOrigin=axismins[0];
-					if(i==1) spatialCal.yOrigin=axismins[1];
-					if(i==2) spatialCal.zOrigin=axismins[2];
-				}
-			}
 			
 			if (noteType.equals("type")) {
 				if (uint8Types.indexOf(noteValuelc)>=0) {
@@ -341,6 +328,28 @@ public class NrrdFileReader extends ImagePlus
 			
 			if(noteType.equals("space origin")){
 				fi.setSpaceOrigin(parseVector(getSubField(thisLine, 0), fi.dimension));
+				// TOFIX - this order of allocations is not a given!
+				// NB xOrigin are in pixels, whereas space origin is of course
+				// in units; these are converted later
+				if(fi.getSpaceOrigin() != null ) {
+					spatialCal.xOrigin = fi.getSpaceOrigin().getElement(0);
+					spatialCal.yOrigin = fi.getSpaceOrigin().getElement(1);
+					spatialCal.zOrigin = fi.getSpaceOrigin().getElement(2);
+				}
+			}
+			
+			if (noteType.equals("axis mins") || noteType.equals("axismins")) {
+				double[] axismins=new double[fi.dimension];
+				for(int i=0;i<fi.dimension;i++) {
+					// TOFIX - this order of allocations is not a given!
+					// NB xOrigin are in pixels, whereas axismins are of course
+					// in units; these are converted later
+					axismins[i]=Double.valueOf(getSubField(thisLine,i)).doubleValue();
+					if(i==0) spatialCal.xOrigin=axismins[0];
+					if(i==1) spatialCal.yOrigin=axismins[1];
+					if(i==2) spatialCal.zOrigin=axismins[2];
+				}
+				fi.setSpaceOrigin(new SimpleVector(axismins));
 			}
 		}
 

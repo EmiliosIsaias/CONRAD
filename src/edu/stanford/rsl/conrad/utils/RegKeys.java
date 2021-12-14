@@ -33,6 +33,12 @@ public abstract class RegKeys {
 	public static final String VICON_SAMPLING_RATE = "VICON_SAMPLING_RATE";
 	
 	/**
+	 * Entry to store the surface information in point clouds as VTK files. <BR>
+	 * The <b>value</b> is a <b>String</b> indicating the location of the directory where point clouds should be stored.
+	 */
+	public static final String POINT_CLOUD_PATH = "POINT_CLOUD_PATH";
+	
+	/**
 	 * Entry to set the projection sampling rate, i.e. the number of frames that are taken by the scanner in each second. <BR>
 	 * The <b>value</b> is a <b>String</b> of a Double value in [Hz]. 
 	 */
@@ -326,6 +332,19 @@ public abstract class RegKeys {
 	public static final String DARK_FIELD_RECONSTRUCTION_LOCATION_ANISO = "DARK_FIELD_RECONSTRUCTION_LOCATION_ANISO";
 	public static final String DARK_FIELD_RECONSTRUCTION_LOCATION_ISO = "DARK_FIELD_RECONSTRUCTION_LOCATION_ISO";
 	
+	/**
+	 * Entry to set the default location of the position of the CONRAD main window. 
+	 * The key is a string that specifies the top left corner in MATLAB notation. "[0,0]" specifies the top left corner 
+	 * to be identical with the top left corner of the screen. This is the default setting.
+	 */
+	public static final String CONRAD_WINDOW_DEFAULT_LOCATION = "CONRAD_WINDOW_DEFAULT_LOCATION";
+	
+	/**
+	 * Entry to set an additional out-of-plane-rotation for Circular Trajectories. 
+	 * The key is a string that specifies the out-of-plane-angle in degrees. Center of rotation is the object. Rotation axis is the cross product of principal ray and rotation axis. Default is 0 degrees that relates to an in-plane rotation, i.e. the source remains in the center plane. 
+	 */
+	public static final String TRAJECTORY_OUT_OF_PLANE_ROTATION = "TRAJECTORY_OUT_OF_PLANE_ROTATION";
+	
 	static {
 		defaultValues = new HashMap<String, String>();
 		defaultValues.put(SLOW_DOWN_MS, "10");
@@ -333,6 +352,7 @@ public abstract class RegKeys {
 		defaultValues.put(PHANTOM_PROJECTOR_ENFORCE_PRIORITY_RAYTRACER, "false");	
 		defaultValues.put(ED_PHANTOM_BONE_RING, "false");
 		defaultValues.put(ED_PHANTOM_CENTERAL_BUFFER_DIAMETER, "15");
+		defaultValues.put(CONRAD_WINDOW_DEFAULT_LOCATION, "[0,0]");
 	}
 	
 }

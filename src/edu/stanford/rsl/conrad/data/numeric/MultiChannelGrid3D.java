@@ -18,6 +18,8 @@ public class MultiChannelGrid3D extends Grid3D {
 	Grid4D multichannelData;
 	
 	public MultiChannelGrid3D(int width, int height, int depth, int channels) {
+		// This will cause some parent methods to fail ( e.g. getSize() );
+		// TODO Override necessary parent methods.
 		super(0,0,0);
 		multichannelData = new Grid4D(width, height, depth, channels);
 		buffer = multichannelData.getSubGrid(0).getBuffer();
@@ -25,12 +27,15 @@ public class MultiChannelGrid3D extends Grid3D {
 	}
 	
 	/**
-	 * Returns the Grid2D of the respective Channel
+	 * Returns the Grid3D of the respective Channel
 	 * @param c the channel number
-	 * @return the Grid2D
+	 * @return the Grid3D
 	 */
 	public Grid3D getChannel(int c){
-		return multichannelData.getSubGrid(c);
+		Grid3D intermediate = multichannelData.getSubGrid(c);
+		intermediate.setSpacing(this.getSpacing());
+		intermediate.setOrigin(this.getOrigin());
+		return intermediate;
 	}
 	
 	/**
@@ -106,4 +111,24 @@ public class MultiChannelGrid3D extends Grid3D {
 		this.channelNames = channelNames;
 	}
 
+	@Override
+	/**
+	 * @return The array's size (excluding borders).
+	 */
+	public int[] getSize() {
+		return new int[]{this.multichannelData.getSize()[0],this.multichannelData.getSize()[1],this.multichannelData.getSize()[2]};
+	}
+	
+	
+	@Override
+	public void setSpacing(double... spacing){
+		super.setSpacing(spacing);
+		multichannelData.setSpacing(spacing[0], spacing[1], spacing[2], 0.0);
+	}
+	
+	@Override
+	public void setOrigin(double... origin){
+		super.setOrigin(origin);
+		multichannelData.setOrigin(origin[0], origin[1], origin[2], 0.0);
+	}
 }

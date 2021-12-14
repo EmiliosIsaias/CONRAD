@@ -1,33 +1,40 @@
 /*
- * Copyright (C) 2010-2014  Andreas Maier
+ * Copyright (C) 2010-2019  Andreas Maier
  * CONRAD is developed as an Open Source project under the GNU General Public License (GPL).
-*/
+ */
 package edu.stanford.rsl.conrad.utils;
 
+import java.awt.Point;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import ij.IJ;
 import ij.ImageJ;
 import edu.stanford.rsl.apps.gui.RawDataOpener;
 
 public abstract class CONRAD {
-	public static final String VersionString = "Version 1.0.6";
+	public static final String VersionString = "Version 1.1.0";
 	public static final String CONRADBibtex = "@article{Maier13-CSF," +
-	"  author = {A. Maier, H. G. Hofmann, M. Berger, P. Fischer, C. Schwemmer, H. Wu, K. Müller, J. Hornegger, J. H. Choi, C. Riess, A. Keil, and R. Fahrig},\n" +
-	"  title={{CONRAD - A software framework for cone-beam imaging in radiology}},\n" +
-	"  journal={Medical Physics},\n" +
-	"  volume={40},\n" +
-	"  number={11},\n" +
-	"  pages={111914-1-8},\n" +
-	"  year={2013}\n" +
-	"}";
+			"  author = {A. Maier, H. G. Hofmann, M. Berger, P. Fischer, C. Schwemmer, H. Wu, K. Müller, J. Hornegger, J. H. Choi, C. Riess, A. Keil, and R. Fahrig},\n" +
+			"  title={{CONRAD - A software framework for cone-beam imaging in radiology}},\n" +
+			"  journal={Medical Physics},\n" +
+			"  volume={40},\n" +
+			"  number={11},\n" +
+			"  pages={111914-1-8},\n" +
+			"  year={2013}\n" +
+			"}";
 	public static final String CONRADMedline = "A. Maier, H. G. Hofmann, M. Berger, P. Fischer, C. Schwemmer, H. Wu, K. Müller, J. Hornegger, J. H. Choi, C. Riess, A. Keil, and R. Fahrig. CONRAD—A software framework for cone-beam imaging in radiology. Medical Physics 40(11):111914-1-8. 2013";
 	public static final String CONRADDefinition = "CONe-beam framework for RADiology (CONRAD)";
 	public static final double SMALL_VALUE = 1.0e-12;
@@ -63,14 +70,67 @@ public abstract class CONRAD {
 		//		System.out.println( "Calculated float epsilon to " + FLOAT_EPSILON + ".");
 	}
 
-	public static void setup(){
-		new ImageJ();
+	/**
+	 * Starts remaining Conrad GUI with optional WindowListener.
+	 * @param listen2 the listener
+	 * @return
+	 */
+	public static WindowListener setup(WindowListener listen2){
+		ImageJ ij = new ImageJ();
+		ij.addWindowListener(listen2);
 		Configuration.loadConfiguration();	
 		RawDataOpener opener = RawDataOpener.getRawDataOpener();
 		opener.setVisible(true);
 		opener.getjButtonLittle().doClick();
 		opener.getjButtonFloat().doClick();
 		opener.setLocation(0, 500);
+		return listen2;
+	}
+	
+	/**
+	 * Starts the remaining CONRAD GUI with default window listener
+	 * @return the windows listener
+	 */
+	public static WindowListener setup(){
+		WindowListener listen2 = new WindowListener() {
+			@Override
+			public void windowClosing(WindowEvent arg0) {
+				System.exit(0);
+			}
+
+			@Override
+			public void windowActivated(WindowEvent arg0) {
+			}
+
+			@Override
+			public void windowClosed(WindowEvent arg0) {
+			}
+
+			@Override
+			public void windowDeactivated(WindowEvent arg0) {
+			}
+
+			@Override
+			public void windowDeiconified(WindowEvent arg0) {
+			}
+
+			@Override
+			public void windowIconified(WindowEvent arg0) {
+			}
+
+			@Override
+			public void windowOpened(WindowEvent arg0) {
+			}
+		};
+		return setup(listen2);
+	}
+
+	public static Point getWindowTopCorner(){
+		String string = Configuration.getGlobalConfiguration().getRegistryEntry(RegKeys.CONRAD_WINDOW_DEFAULT_LOCATION);
+		string = string.replace("[","").replace("]", "").replace(" ", "").replace(";", "");
+		String [] strings = string.split(",");
+		Point location = new Point(Integer.parseInt(strings[0]), Integer.parseInt(strings[1]));
+		return location;
 	}
 
 	public static void gc(){
@@ -134,7 +194,7 @@ public abstract class CONRAD {
 	}
 
 	private static HashMap<Class<? extends Object>, ArrayList<Object>> classLookupTable = new HashMap<Class<? extends Object>, ArrayList<Object>>();
-	
+
 	/**
 	 * The method will parse the whole current directories currently available to the ClassLoader to find all
 	 * classes that are subclasses of cl. The method returns an ArrayList with all objects that could be instantiated using the default constructor.
@@ -169,7 +229,7 @@ public abstract class CONRAD {
 		}
 		return cloneArrayList;
 	}
-	
+
 	/**
 	 * Searches the class path for classes that can be cast onto the class cl.
 	 * Method will register the found classes in an internal lookup table.
@@ -210,7 +270,7 @@ public abstract class CONRAD {
 	 * @throws IOException
 	 */
 	private static ArrayList<Class<? extends Object>> getClasses(String packageName)
-	throws ClassNotFoundException, IOException {
+			throws ClassNotFoundException, IOException {
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		assert classLoader != null;
 		String path = packageName.replace('.', '/');
@@ -219,6 +279,39 @@ public abstract class CONRAD {
 		while (resources.hasMoreElements()) {
 			URL resource = resources.nextElement();
 			String filename = resource.getFile();
+			
+			// Get URI from resource
+			URI uri = null;
+			try {
+				uri = resource.toURI();
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			// Check whether CONRAD was executed from jar file
+			if(uri.getScheme().equals("jar")) {
+				// System.out.println("Parsing style: Conrad jar version.");
+				
+				// Find the path to the root jar file
+				String jarFileName = filename.split("!")[0];
+				JarFile jar = null;
+				try {
+					jar = new JarFile(new File(new URI(jarFileName)));
+				} catch (URISyntaxException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				// Extract the classes
+				ArrayList<Class<? extends Object>> classes = findClassesInJar(jar,path);
+				jar.close();
+				
+				return classes;
+				// We're done with the jar case, everything below is non-jar parsing
+			}
+			// System.out.println("Parsing style: Conrad eclipse version.");
+			
 			if (filename.contains("%20")) filename = filename.replace("%20", " ");
 			dirs.add(new File(filename));
 		}
@@ -266,6 +359,42 @@ public abstract class CONRAD {
 		return classes;
 	}
 
+	/**
+	 * Iterative method used to find all classes in a given directory and subdirs packed in a *.jar file.
+	 *
+	 * @param jar   The directory location of the jar file
+	 * @param packageName The package name for classes found inside the base directory
+	 * @return The classes
+	 * @throws ClassNotFoundException
+	 */
+	private static ArrayList<Class<? extends Object>> findClassesInJar(JarFile jar, String packageName) throws ClassNotFoundException {
+		ArrayList<Class<? extends Object>> classes = new ArrayList<Class<? extends Object>>();
+		Enumeration<JarEntry> jarIterator = jar.entries();
+		
+		while (jarIterator.hasMoreElements()) {
+			JarEntry entr = jarIterator.nextElement();
+			if (entr != null && entr.getName().contains(packageName)) {
+				// System.out.println(entr.getName() + " " + entr.isDirectory());
+				if(!entr.isDirectory() && entr.getName().endsWith(".class")) {
+					try{
+						classes.add(Class.forName(entr.getName().substring(0, entr.getName().length() - 6).replace("/", ".")));
+					} catch (UnsatisfiedLinkError e){
+						/**
+						 * We skip over classes that cannot be loaded (compilation errors, etc.).
+						 */
+						//System.out.println("skipping " + file);
+					} catch (NoClassDefFoundError e2){
+						/**
+						 * We skip over classes that cannot be loaded (compilation errors, etc.).
+						 */
+						//System.out.println("skipping " + file);
+					}
+				}
+			}
+		}
+		return classes;
+	}
+	
 	/**
 	 * Method to log something in a log file.
 	 * Currently it just redirects to IJ.log method.

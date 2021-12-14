@@ -49,7 +49,7 @@ public class Grid4D extends NumericGrid {
 		this.spacing = new double[4];
 		this.origin = new double[4];
 		for (int i = 0; i < 4; ++i) {
-			assert this.size[4] > 0 : "Size values have to be greater than zero!";
+			assert this.size[i] > 0 : "Size values have to be greater than zero!";
 		}
 
 		if (allocateImmediately) {
@@ -175,7 +175,7 @@ public class Grid4D extends NumericGrid {
 		super.setSpacing(spacing);
 		for (Grid3D slice : buffer){
 			if (slice != null)
-				slice.setSpacing(spacing[0],spacing[1]);
+				slice.setSpacing(spacing[0],spacing[1],spacing[2]);
 		}
 	}
 
@@ -184,7 +184,7 @@ public class Grid4D extends NumericGrid {
 		super.setOrigin(origin);
 		for (Grid3D slice : buffer){
 			if (slice != null)
-				slice.setOrigin(origin[0],origin[1]);
+				slice.setOrigin(origin[0],origin[1],origin[2]);
 		}
 	}
 
